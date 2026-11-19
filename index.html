@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>槓桿原理線上實驗</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--tx:#1d2433;--mu:#667085;--bd:#d9deea;--ac:#2563eb;--ok:#16a34a;--bad:#dc2626;--bm:#b45309;--w1:#3b82f6;--w2:#f97316;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--card:#1b202b;--tx:#e8ebf3;--mu:#9aa3b5;--bd:#303749;--ac:#60a5fa;--bm:#d9a441;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12151c;--card:#1b202b;--tx:#e8ebf3;--mu:#9aa3b5;--bd:#303749;--ac:#60a5fa;--bm:#d9a441;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:.2em 0}h2{font-size:1.15rem;margin:0 0 .5em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin:14px 0}
+.goal{color:var(--mu);margin:0}
+svg{width:100%;height:auto;display:block}
+#beam{transition:transform .6s cubic-bezier(.3,1.4,.5,1)}
+.ctl{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.side{border:2px solid;border-radius:12px;padding:10px}
+.side.l{border-color:var(--w1)}.side.r{border-color:var(--w2)}
+label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0}
+select,input[type=text],input[type=number]{font:inherit;padding:6px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);max-width:100%}
+input.blank{width:4.2em;text-align:center}
+button{font:inherit;padding:8px 14px;border-radius:10px;border:1px solid var(--ac);background:var(--ac);color:#fff;cursor:pointer}
+button.g{background:transparent;color:var(--ac)}
+.st{text-align:center;font-weight:700;margin:6px 0;min-height:1.6em}
+.eq{text-align:center;color:var(--mu)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{border:1px solid var(--bd);padding:5px;text-align:center}
+.wrap{overflow-x:auto}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+textarea{width:100%;font:inherit;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);min-height:70px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+@media(max-width:520px){.ctl{grid-template-columns:1fr}}
+@media print{.noprint{display:none}body{background:#fff;color:#000}}
+</style></head><body><main>
+<h1>⚖️ 槓桿原理線上實驗</h1>
+<p class="goal"><b>實驗目的：</b>利用槓桿裝置，找出能使蹺蹺板維持平衡的條件。</p>
+
+<div class="card">
+<h2>一、實驗操作</h2>
+<p class="goal">槓桿中央是支點，兩邊刻度從 3 cm 到 24 cm。一開始沒有掛任何砝碼：<b>點一下白點掛上 1 個砝碼</b>（每個孔最多 5 個），可以同時掛在好幾個孔；<b>點砝碼可以取下</b>。觀察槓桿如何傾斜。</p>
+<svg id="sv" viewBox="0 0 700 320" role="img" aria-label="槓桿蹺蹺板"></svg>
+<div class="st" id="st"></div>
+<div class="side" style="border-color:var(--bd);margin-bottom:12px"><b>步驟一：先調平衡</b>　<span class="goal">一開始槓桿是歪的。調整兩端的灰色平衡螺帽（往外＝該端變重），直到槓桿水平，才能掛砝碼。</span>
+<div class="row"><span>左螺帽</span><button class="g" data-n="l-">往內</button><button class="g" data-n="l+">往外</button><span style="width:1em"></span><span>右螺帽</span><button class="g" data-n="r-">往內</button><button class="g" data-n="r+">往外</button></div></div>
+<div class="ctl"><div class="side l" id="ls"></div><div class="side r" id="rs"></div></div>
+<div class="row"><button id="rec">📝 記錄這一組數據</button><button class="g" id="rst">🧹 清空砝碼</button></div>
+<p class="goal">提示：想一想，要先自己算算看再按記錄，再看蹺蹺板是否真的平衡。</p>
+</div>
+
+<div class="card">
+<h2>二、學習單</h2>
+<div class="row"><label>班級座號 <input type="text" data-s="cls" size="8"></label><label>姓名 <input type="text" data-s="nm" size="10"></label></div>
+<h3 style="font-size:1rem">0. 先調平衡</h3>
+<p>一開始槓桿向 <select data-s="b1"><option value="">請選擇</option><option>左</option><option>右</option></select> 邊傾斜，我調整平衡螺帽後變水平。為什麼要先調平衡才開始實驗？<br><input type="text" data-s="b2" style="width:100%"></p>
+<h3 style="font-size:1rem">1. 實驗記錄表（力矩 ＝ 重量 × 距離）</h3>
+<div class="wrap"><table><thead><tr><th>#</th><th>左邊掛法（個×cm）</th><th>左 力矩</th><th>右邊掛法（個×cm）</th><th>右 力矩</th><th>結果</th><th class="noprint"></th></tr></thead><tbody id="tb"></tbody></table></div>
+<p class="goal">請至少記錄 5 組，其中至少 3 組是「平衡」的。</p>
+<h3 style="font-size:1rem">2. 預測與觀察</h3>
+<p>左邊 2 個砝碼掛在 9 cm 處，右邊 3 個砝碼掛在 <input class="blank" type="text" data-s="p1"> cm 處，我預測會平衡。實驗後結果：<select data-s="p1r"><option value="">請選擇</option><option>平衡</option><option>左傾</option><option>右傾</option></select></p>
+<h3 style="font-size:1rem">3. 發現規律</h3>
+<p>當蹺蹺板平衡時，左邊的 <input class="blank" type="text" data-s="c1"> × <input class="blank" type="text" data-s="c2"> ＝ 右邊的 <input class="blank" type="text" data-s="c3"> × <input class="blank" type="text" data-s="c4">。<br><span class="goal">（請填「重量」或「距離」）</span></p>
+<h3 style="font-size:1rem">4. 挑戰題（做完按「檢查」）</h3>
+<p>(a) 左邊 4 個砝碼掛在 6 cm 處，右邊 2 個砝碼要掛在 <input class="blank" type="number" data-s="q1" min="0"> cm 處才會平衡。 <button class="g" onclick="chk('q1',12,this)">檢查</button> <span></span></p>
+<p>(b) 左邊 3 個砝碼掛在 12 cm 處，右邊掛在 6 cm 處，需要 <input class="blank" type="number" data-s="q2" min="0"> 個砝碼才會平衡。 <button class="g" onclick="chk('q2',6,this)">檢查</button> <span></span></p>
+<p>(c) 左邊 1 個砝碼掛在 24 cm 處，右邊用 2 個砝碼，應掛在 <input class="blank" type="number" data-s="q3" min="0"> cm 處。 <button class="g" onclick="chk('q3',12,this)">檢查</button> <span></span></p>
+<h3 style="font-size:1rem">5. 我的結論與生活例子</h3>
+<textarea data-s="sum" placeholder="用自己的話說明：蹺蹺板要平衡，需要什麼條件？生活中哪裡也用到槓桿？"></textarea>
+<div class="row noprint"><button class="g" onclick="window.print()">🖨️ 列印學習單</button><span class="goal">答案會自動儲存在這台裝置的瀏覽器中。</span></div>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const S={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const fill=(id,from,to)=>{const s=$(id);for(let i=from;i<=to;i++)s.add(new Option(i,i))};
+const H={};let cur=0,raf=0,nl=1,nr=4;if(Math.random()<.5){nl=4;nr=1}
+const lvl=()=>nl===nr;
+const POS=[];for(let p=1;p<=8;p++)POS.push(-p,p);
+function render(a){
+ const k=11.5,rad=a*Math.PI/180,c=Math.cos(rad),s=Math.sin(rad);
+ let h='<line x1="30" y1="100" x2="665" y2="100" stroke="var(--mu)" stroke-dasharray="4 3"/><text x="685" y="104" font-size="13" fill="var(--mu)" text-anchor="middle">cm</text><rect x="346" y="110" width="8" height="186" fill="#94a3b8"/><rect x="290" y="294" width="120" height="18" rx="2" fill="#2557b8"/>';
+ h+=`<g transform="rotate(${a} 350 100)"><rect x="50" y="96" width="22" height="8" fill="#64748b"/><rect x="628" y="96" width="22" height="8" fill="#64748b"/><rect x="69" y="88" width="5" height="24" fill="#e8962a"/><rect x="626" y="88" width="5" height="24" fill="#e8962a"/>`;
+ h+=`<rect x="${64-3.4*nl}" y="92" width="6" height="16" rx="1" fill="#475569"/><rect x="${630+3.4*nr}" y="92" width="6" height="16" rx="1" fill="#475569"/>`;
+ for(let i=0;i<16;i++)h+=`<rect x="${74+i*34.5}" y="89" width="34.5" height="22" fill="${i%2?'#dcc3a5':'#cc3030'}"/>`;
+ for(const p of POS){const x=350+p*3*k;h+=`<text x="${x}" y="82" font-size="13" text-anchor="middle" fill="var(--mu)">${Math.abs(p)*3}</text><circle cx="${x}" cy="106" r="4.5" fill="#fff" stroke="#3b82f6" stroke-width="1.3"/><circle cx="${x}" cy="106" r="14" fill="transparent" data-add="${p}" style="cursor:pointer"/>`}
+ h+='</g>';
+ for(const p of POS){const n=H[p]||0;if(!n)continue;const dx=p*3*k,x=350+dx*c-6*s,y=100+dx*s+6*c,col=p<0?'#3b82f6':'#f97316';
+  h+=`<line x1="${x}" y1="${y}" x2="${x}" y2="${y+12}" stroke="var(--mu)"/>`;
+  for(let j=0;j<n;j++)h+=`<rect x="${x-14}" y="${y+12+j*16}" width="28" height="15" rx="3" fill="${col}" data-rm="${p}" style="cursor:pointer"/><text x="${x}" y="${y+24+j*16}" font-size="11" text-anchor="middle" fill="#fff" pointer-events="none">1</text>`}
+ h+='<rect x="339" y="82" width="22" height="36" rx="3" fill="#2557b8"/><circle cx="350" cy="100" r="4" fill="#fff"/>';
+ $('sv').innerHTML=h}
+function go(t){cancelAnimationFrame(raf);const f=cur,t0=performance.now();
+ const step=n=>{const p=Math.min(1,(n-t0)/600),e=1-Math.pow(1-p,3);cur=f+(t-f)*e;render(cur);if(p<1)raf=requestAnimationFrame(step)};raf=requestAnimationFrame(step)}
+function draw(){
+ let L=0,R=0;const ls=[],rs=[];
+ for(const p of POS){const n=H[p]||0;if(!n)continue;const d=Math.abs(p)*3;if(p<0){L+=n*d;ls.push(`${n}×${d}`)}else{R+=n*d;rs.push(`${n}×${d}`)}}
+ const diff=R-L,tot=diff+(nr-nl)*6;
+ go(tot?Math.sign(tot)*Math.min(7,1.5+Math.abs(tot)*0.08):0);
+ document.querySelectorAll('[data-n]').forEach(b=>b.disabled=!!(L||R));
+ const lt=ls.join(' + '),rt=rs.join(' + ');
+ $('ls').innerHTML=`<b style="color:var(--w1)">◀ 左邊力矩</b><br>${lt?lt+' = <b>'+L+'</b>':'（尚未掛砝碼）'}`;
+ $('rs').innerHTML=`<b style="color:var(--w2)">右邊力矩 ▶</b><br>${rt?rt+' = <b>'+R+'</b>':'（尚未掛砝碼）'}`;
+ const st=$('st');
+ if(!lvl())st.innerHTML='<span class="bad">步驟一：槓桿還沒水平，請先調整平衡螺帽（螺帽往外，該端變重）</span>';
+ else if(!L&&!R)st.textContent='✅ 槓桿已調平衡！步驟二：點白點掛砝碼（點砝碼可取下）';
+ else if(!diff)st.innerHTML='<span class="ok">✅ 槓桿平衡！</span>';
+ else if(diff<0)st.innerHTML='<span class="bad">⬇️ 左邊下沉</span>';
+ else st.innerHTML='<span class="bad">右邊下沉 ⬇️</span>';
+ return{L,R,lt,rt}
+}
+$('sv').addEventListener('pointerdown',e=>{const t=e.target,a=t.getAttribute('data-add'),r=t.getAttribute('data-rm');
+ if(a!==null){if(!lvl()){$('st').innerHTML='<span class="bad">⚠️ 請先把平衡螺帽調到讓槓桿水平，才能掛砝碼</span>';return}const p=+a;H[p]=Math.min(5,(H[p]||0)+1);draw()}
+ else if(r!==null){const p=+r;H[p]=Math.max(0,(H[p]||0)-1);draw()}});
+let rows=[];try{rows=JSON.parse(S.get('lever_rows2')||'[]')}catch(e){}
+function table(){
+ $('tb').innerHTML=rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.lt||'—'}</td><td>${r.L}</td><td>${r.rt||'—'}</td><td>${r.R}</td><td>${r.L===r.R?'<span class="ok">平衡</span>':r.L>r.R?'左傾':'右傾'}</td><td class="noprint"><button class="g" style="padding:2px 8px" onclick="del(${i})">✕</button></td></tr>`).join('')||'<tr><td colspan="7" class="goal">尚無資料，請在上方操作後按「記錄」</td></tr>';
+ S.set('lever_rows2',JSON.stringify(rows));
+}
+window.del=i=>{rows.splice(i,1);table()};
+$('rec').onclick=()=>{const r=draw();if(!lvl()||(!r.L&&!r.R))return;rows.push(r);table()};
+$('rst').onclick=()=>{for(const p in H)delete H[p];draw()};
+document.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{const t=b.dataset.n,d=t[1]==='+'?1:-1;if(t[0]==='l')nl=Math.max(0,Math.min(5,nl+d));else nr=Math.max(0,Math.min(5,nr+d));draw()});
+document.querySelectorAll('[data-s]').forEach(e=>{const v=S.get('lever_'+e.dataset.s);if(v!==null)e.value=v;e.oninput=e.onchange=()=>S.set('lever_'+e.dataset.s,e.value)});
+window.chk=(k,a,b)=>{const v=document.querySelector(`[data-s=${k}]`).value,s=b.nextElementSibling;
+ s.innerHTML=v===''?'':(+v===a?'<span class="ok">✅ 答對了！</span>':'<span class="bad">再想想：先算左邊的 重量×距離</span>')};
+draw();table();
+</script></body></html>
