@@ -705,7 +705,7 @@ $("#reset").addEventListener("click",function(){
 });
 
 /* ---------- send to Google Sheet (via Apps Script). Paste the web app URL between the quotes. ---------- */
-var SEND_URL="";
+var SEND_URL="https://script.google.com/macros/s/AKfycbxBCtc4RJgGF2ioViiVrFxBJ1Qd1D9KdyMFcKrHgR48i6ji9lZVuFqC3pASftcgYvuT/exec";
 if(SEND_URL)$("#send").hidden=false;
 $("#send").addEventListener("click",function(){
   if(!ws.info.cls||!ws.info.no||!ws.info.name){toast("請先在學習單最上面填好班級、座號、姓名");return}
