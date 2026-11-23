@@ -167,6 +167,13 @@ table.tbl{border-collapse:collapse;width:100%;min-width:640px;background:var(--s
 .cell[data-s="ok"] input,.cell[data-s="ok"] select{border-color:var(--good)}
 .cell[data-s="bad"] input,.cell[data-s="bad"] select{border-color:var(--bad);background:var(--bad-soft)}
 .feedback{margin-top:10px;display:grid;gap:6px;font-size:15px}
+.score{background:var(--surface2);border-radius:12px;padding:14px;display:grid;gap:10px}
+.score .big{font-size:38px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.score .big small{font-size:18px;font-weight:500;color:var(--muted)}
+.score .parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.score .parts div{background:var(--surface);border-radius:8px;padding:8px 10px;font-size:14px;display:flex;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums}
+.score .parts b{font-weight:700}
+.score .note{font-size:13.5px;color:var(--muted)}
 .feedback p{padding:8px 12px;border-radius:8px;background:var(--surface2)}
 .feedback p.ok{background:var(--good-soft);color:var(--good)}
 .feedback p.bad{background:var(--bad-soft);color:var(--bad)}
@@ -190,6 +197,25 @@ table.tbl{border-collapse:collapse;width:100%;min-width:640px;background:var(--s
   .tab{padding-inline:12px;flex:1}
   .arm{padding:10px}
   .blank{width:7.5em}
+}
+
+@media print{
+  :root:root:root{--bg:#fff;--surface:#fff;--surface2:#f1f3f7;--fg:#000;--muted:#444;--line:#999;--accent:#1c3f8a;--accent-soft:#e3eaf8;color-scheme:light}
+  @page{margin:12mm}
+  html,body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{padding:0!important;font-size:13px}
+  body::before,.tabs,.actions,.toast,#fb,#panel-lab,.nop,.hintbox,.sec-note{display:none!important}
+  #panel-sheet{display:block!important}
+  .hero{padding-block:0 8px}.hero .lede{display:none}
+  .panel{padding-block:0}
+  .sheet{max-width:none;gap:10px}
+  .card{break-inside:avoid;border-color:#999;padding:10px}
+  .tblwrap{overflow:visible}
+  table.tbl{min-width:0}
+  .cell::after,.mark{display:none!important}
+  .cell[data-s] input,.cell[data-s] select{border-color:var(--line)!important;background:#fff!important}
+  textarea{resize:none;border-color:#999;overflow:visible}
+  select{-webkit-appearance:none;appearance:none}
 }
 </style>
 <style>[hidden]{display:none!important}html{color-scheme:light dark}body{margin:0}</style>
@@ -287,7 +313,7 @@ table.tbl{border-collapse:collapse;width:100%;min-width:640px;background:var(--s
         <label class="field">座號<input id="i_no" data-info="no" autocomplete="off" inputmode="numeric"></label>
         <label class="field">姓名<input id="i_name" data-info="name" autocomplete="name"></label>
       </div>
-      <p class="small muted" style="margin-top:10px">填寫內容會自動保存在這個瀏覽器裡。換裝置或換瀏覽器時，請先用下方「複製學習單內容」存起來。</p>
+      <p class="small muted nop" style="margin-top:10px">填寫內容會自動保存在這個瀏覽器裡。換裝置或換瀏覽器時，請先用下方「列印／另存 PDF」存起來。</p>
     </div>
 
     <div class="card">
@@ -315,7 +341,7 @@ table.tbl{border-collapse:collapse;width:100%;min-width:640px;background:var(--s
         <label class="field">說明你的發現（可以舉出你試過的例子）
           <textarea id="q1t" data-f="q1t" rows="3" placeholder="例如：左臂掛 4 個在第 3 孔，右臂掛 ___ 個時，找不到平衡的孔位，因為……"></textarea>
         </label>
-        <details style="margin-top:8px"><summary style="cursor:pointer;min-height:44px;display:flex;align-items:center">需要提示嗎？</summary>
+        <details style="margin-top:8px"><summary class="nop" style="cursor:pointer;min-height:44px;display:flex;align-items:center">需要提示嗎？</summary>
           <div class="hintbox">回到「模擬實驗」，左臂維持 4 個掛第 3 孔。右臂分別試試掛 1、2、3、4、5 個，看看哪些個數能在 1～8 孔中找到平衡。孔位只有整數孔，想想看沒有找到時，需要的距離是多少 cm？</div>
         </details>
       </div>
@@ -343,14 +369,9 @@ table.tbl{border-collapse:collapse;width:100%;min-width:640px;background:var(--s
 
     <div class="actions">
       <button class="btn" id="check" type="button">檢查我的答案</button>
-      <button class="btn ghost" id="copy" type="button">複製學習單內容</button>
+      <button class="btn ghost" id="print" type="button">列印／另存 PDF</button>
       <button class="btn" id="send" type="button" hidden>送出給老師</button>
       <button class="btn danger" id="reset" type="button">全部清除重填</button>
-    </div>
-    <div class="card" id="copyCard" hidden>
-      <h2>學習單文字</h2>
-      <p class="small muted" style="margin-bottom:8px">如果沒有自動複製，請全選下方文字後複製，再貼到聯絡簿、作業平台或通訊軟體。</p>
-      <textarea class="copybox" id="copyBox" readonly></textarea>
     </div>
   </div>
 </section>
@@ -625,70 +646,82 @@ $("#rec").addEventListener("click",function(){
 });
 $("#toSheet").addEventListener("click",function(){showTab("sheet")});
 
-/* checking */
+/* checking & grading */
 function num(id){var v=fv(id);return v===""?null:parseFloat(v)}
 function mark(id,ok){var c=$("[data-cell=\""+id+"\"]");if(c)c.dataset.s=ok?"ok":"bad"}
 function setBlank(id,ok){var m=$("#m_"+id);m.dataset.s=ok?"ok":"bad";m.textContent=ok?"✓":"✗"}
 function accept(v,list){v=(v||"").replace(/\s/g,"");return list.some(function(x){return v.indexOf(x)>-1})}
-$("#check").addEventListener("click",function(){
-  var msgs=[],good=0,bad=0;
-  function g(){good++}function b(){bad++}
-  var bl=[["b1",["支點","轉軸","軸"]],["b2",["砝碼","重量"]],["b3",["力臂","距離"]]];
-  bl.forEach(function(x){var v=fv(x[0]);if(v===""){return}if(accept(v,x[1])){setBlank(x[0],true);g()}else{setBlank(x[0],false);b();msgs.push(["bad","設計裝置的填空「"+v+"」不太對，再想想看。"])}});
-  function plist(v){
-    v=(v||"").trim();if(v==="")return null;
-    var a=v.split(/[+＋,，、]/).map(function(x){return parseFloat(x)});
-    return a.some(function(x){return isNaN(x)})?null:a;
-  }
-  function expected(w,d){
-    var a=plist(w),b=plist(d);if(!a||!b||a.length!==b.length)return null;
-    var t=0;for(var k=0;k<a.length;k++)t+=a[k]*b[k];return t;
-  }
+function plist(v){
+  v=(v||"").trim();if(v==="")return null;
+  var a=v.split(/[+＋,，、]/).map(function(x){return parseFloat(x)});
+  return a.some(function(x){return isNaN(x)})?null:a;
+}
+function expected(w,d){
+  var a=plist(w),b=plist(d);if(!a||!b||a.length!==b.length)return null;
+  var t=0;for(var k=0;k<a.length;k++)t+=a[k]*b[k];return t;
+}
+function validSetup(w,d){
+  var a=plist(w),b=plist(d);if(!a||!b||a.length!==b.length)return false;
+  return a.every(function(x){return x>0&&x%UNIT===0})&&b.every(function(x){return x>=STEP&&x<=HOLES*STEP&&x%STEP===0});
+}
+var MAXP={blank:12,table:40,q:10,d1:18,d2:20};
+function grade(){
+  var msgs=[],P={blank:0,table:0,q:0,d1:0,d2:0};
+  [["b1",["支點","轉軸","軸"]],["b2",["砝碼","重量"]],["b3",["力臂","距離"]]].forEach(function(x){
+    var v=fv(x[0]);
+    if(v===""){msgs.push(["","設計裝置的填空還沒填完。"]);return}
+    if(accept(v,x[1])){setBlank(x[0],true);P.blank+=4}
+    else{setBlank(x[0],false);msgs.push(["bad","設計裝置的填空「"+v+"」不太對，再想想看。"])}
+  });
   for(var i=1;i<=4;i++){
-    var lt=num("lt"+i),rt=num("rt"+i);
-    var el_=expected(fv("lw"+i),fv("ld"+i)),er_=expected(fv("rw"+i),fv("rd"+i));
-    if(lt!==null&&el_!==null){var ok=Math.abs(lt-el_)<0.5;mark("lt"+i,ok);ok?g():(b(),msgs.push(["bad","第 "+i+" 次左臂力矩大小和「重量 × 距離」不一樣。"]))}
-    if(rt!==null&&er_!==null){var ok2=Math.abs(rt-er_)<0.5;mark("rt"+i,ok2);ok2?g():(b(),msgs.push(["bad","第 "+i+" 次右臂力矩大小和「重量 × 距離」不一樣。"]))}
-    if(fv("ldir"+i)!==""){var o3=fv("ldir"+i)==="逆時鐘";mark("ldir"+i,o3);o3?g():(b(),msgs.push(["bad","第 "+i+" 次左臂的砝碼會讓槓桿往哪個方向轉？再看看模擬實驗。"]))}
-    if(fv("rdir"+i)!==""){var o4=fv("rdir"+i)==="順時鐘";mark("rdir"+i,o4);o4?g():(b(),msgs.push(["bad","第 "+i+" 次右臂的砝碼會讓槓桿往哪個方向轉？再看看模擬實驗。"]))}
-    if(lt!==null&&rt!==null&&Math.abs(lt-rt)>=0.5)msgs.push(["bad","第 "+i+" 次左右力矩不相等，槓桿真的水平平衡了嗎？"]);
-    if(lt===null&&el_!==null)msgs.push(["","第 "+i+" 次還沒有填左臂力矩。"]);
-    if(rt===null&&er_!==null)msgs.push(["","第 "+i+" 次還沒有填右臂力矩。"]);
+    var lt=num("lt"+i),rt=num("rt"+i),tp=0;
+    var eL=expected(fv("lw"+i),fv("ld"+i)),eR=expected(fv("rw"+i),fv("rd"+i));
+    if(lt!==null&&eL!==null){var a1=Math.abs(lt-eL)<0.5;mark("lt"+i,a1);if(a1)tp+=2;else msgs.push(["bad","第 "+i+" 次左臂力矩大小和「重量 × 距離」不一樣。"])}
+    else if(fv("lw"+i)!==""&&fv("ld"+i)!=="")msgs.push(["","第 "+i+" 次還沒有填左臂力矩。"]);
+    if(rt!==null&&eR!==null){var a2=Math.abs(rt-eR)<0.5;mark("rt"+i,a2);if(a2)tp+=2;else msgs.push(["bad","第 "+i+" 次右臂力矩大小和「重量 × 距離」不一樣。"])}
+    else if(fv("rw"+i)!==""&&fv("rd"+i)!=="")msgs.push(["","第 "+i+" 次還沒有填右臂力矩。"]);
+    if(fv("ldir"+i)!==""){var a3=fv("ldir"+i)==="逆時鐘";mark("ldir"+i,a3);if(a3)tp+=2;else msgs.push(["bad","第 "+i+" 次左臂的砝碼會讓槓桿往哪個方向轉？再看看模擬實驗。"])}
+    if(fv("rdir"+i)!==""){var a4=fv("rdir"+i)==="順時鐘";mark("rdir"+i,a4);if(a4)tp+=2;else msgs.push(["bad","第 "+i+" 次右臂的砝碼會讓槓桿往哪個方向轉？再看看模擬實驗。"])}
+    if(eL!==null&&eR!==null){
+      if(!validSetup(fv("lw"+i),fv("ld"+i))||!validSetup(fv("rw"+i),fv("rd"+i)))msgs.push(["bad","第 "+i+" 次的重量要是 20 的倍數，距離要是 3～24 cm 內 3 的倍數（孔位）。"]);
+      else if(Math.abs(eL-eR)<0.5)tp+=2;
+      else msgs.push(["bad","第 "+i+" 次左右力矩不相等，槓桿並沒有平衡。"]);
+    }
+    if(i===1&&fv("rd1")==="")tp=0;
+    P.table+=tp;
   }
-  var d1=fv("d1s");
-  if(d1!==""){var o5=d1==="兩側力矩大小相等";setBlank("d1s",o5);o5?g():(b(),msgs.push(["bad","討論 1：平衡時，兩側力矩大小有什麼關係？"]))}
-  var m=$("#fb"),h="";
-  if(bad===0&&good>0)h+="<p class=\"ok\">目前檢查過的 "+good+" 項都正確。</p>";
-  else if(good===0&&bad===0)h+="<p>還沒有可以檢查的內容，先填寫一些再按檢查。</p>";
-  else h+="<p>"+good+" 項正確，"+bad+" 項要再想想。</p>";
-  msgs.forEach(function(x){h+="<p"+(x[0]?" class=\""+x[0]+"\"":"")+">"+x[1]+"</p>"});
-  m.innerHTML=h;
-  toast(bad===0&&good>0?"檢查完成，目前都正確":"檢查完成，請看提示");
-  m.scrollIntoView({behavior:reduce?"auto":"smooth",block:"nearest"});
+  if(fv("q1")==="不一定")P.q+=6;else if(fv("q1")==="")msgs.push(["","步驟 Q 還沒有選擇答案。"]);else msgs.push(["bad","步驟 Q：左臂 4 個掛第 3 孔，右臂只掛 1 個或 5 個，找得到平衡的孔位嗎？"]);
+  if(fv("q1t").trim().length>=8)P.q+=4;else msgs.push(["","步驟 Q 請再多寫一點說明。"]);
+  if(fv("d1s")==="兩側力矩大小相等"){setBlank("d1s",true);P.d1+=10}
+  else if(fv("d1s")==="")msgs.push(["","討論 1 還沒有選擇。"]);
+  else{setBlank("d1s",false);msgs.push(["bad","討論 1：平衡時，兩側力矩大小有什麼關係？"])}
+  var t1=fv("d1t"),h1=/逆時[針鐘]/.test(t1),h2=/順時[針鐘]/.test(t1);
+  if(h1&&h2)P.d1+=8;else if(h1||h2){P.d1+=4;msgs.push(["","討論 1：兩側力矩的方向都要說到喔。"])}
+  else msgs.push(["","討論 1：請說明左、右兩側力矩的方向。"]);
+  var t2=fv("d2t"),c1=/順時[針鐘]/.test(t2)&&/逆時[針鐘]/.test(t2),c2=/相等|等於|一樣|相同|＝|=/.test(t2),c3=/力矩/.test(t2);
+  if(c1)P.d2+=8;if(c2)P.d2+=8;if(c3)P.d2+=4;
+  if(t2.trim()==="")msgs.push(["","討論 2 還沒有寫。"]);
+  else if(P.d2<20)msgs.push(["","討論 2：想想看，要用「順時針方向力矩」和「逆時針方向力矩」的大小關係來說明。"]);
+  var total=P.blank+P.table+P.q+P.d1+P.d2;
+  return {total:total,P:P,msgs:msgs};
+}
+$("#check").addEventListener("click",function(){
+  var r=grade(),bad=r.msgs.filter(function(x){return x[0]==="bad"}).length;
+  var h=r.msgs.length===0?"<p class=\"ok\">目前填寫的內容都沒有問題，記得最後按「送出給老師」。</p>":
+        "<p>"+(bad?"有 "+bad+" 個地方要再想想，":"")+"請看下面的提示：</p>";
+  r.msgs.forEach(function(x){h+="<p"+(x[0]?" class=\""+x[0]+"\"":"")+">"+x[1]+"</p>"});
+  $("#fb").innerHTML=h;
+  toast(r.msgs.length===0?"檢查完成，沒有問題":"檢查完成，請看提示");
+  $("#fb").scrollIntoView({behavior:reduce?"auto":"smooth",block:"nearest"});
 });
 
-/* copy */
-function sheetText(){
-  var f=function(id){return fv(id)||"＿＿"};
-  var t="【槓桿原理 實驗3-3 學習單】\n班級："+(ws.info.cls||"")+"　座號："+(ws.info.no||"")+"　姓名："+(ws.info.name||"")+"\n\n";
-  t+="一、設計裝置\n1. 蹺蹺板繞著 "+f("b1")+" 旋轉。\n2. 用不同重量的 "+f("b2")+" 模擬作用力；改變施力位置表示改變作用力的 "+f("b3")+"。\n\n";
-  t+="二、實驗紀錄\n";
-  for(var i=1;i<=4;i++){
-    t+="第"+i+"次　左臂：重量 "+f("lw"+i)+" gw、距離 "+f("ld"+i)+" cm、力矩 "+f("lt"+i)+" gw·cm、"+f("ldir"+i)+"\n";
-    t+="　　　　右臂：重量 "+f("rw"+i)+" gw、距離 "+f("rd"+i)+" cm、力矩 "+f("rt"+i)+" gw·cm、"+f("rdir"+i)+"\n";
-  }
-  t+="\n步驟Q：任意選擇砝碼串的數量，都能找到平衡位置嗎？\n"+(ws.f.q1||"（未選擇）")+"。"+(ws.f.q1t||"")+"\n\n";
-  t+="三、結果與討論\n1. 平衡時兩側力矩："+(ws.f.d1s||"（未選擇）")+"。"+(ws.f.d1t||"")+"\n2. 平衡條件："+(ws.f.d2t||"")+"\n";
-  return t;
-}
-$("#copy").addEventListener("click",function(){
-  var text=sheetText(),box=$("#copyBox");
-  box.value=text;$("#copyCard").hidden=false;
-  function fallback(){box.focus();box.select();try{box.setSelectionRange(0,text.length)}catch(e){}toast("請長按文字，選擇「拷貝」")}
-  try{
-    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast("已複製學習單內容")},fallback)}
-    else fallback();
-  }catch(e){fallback()}
+/* print / save as PDF */
+function fitAreas(){$$("textarea").forEach(function(t){t.style.height="auto";t.style.height=(t.scrollHeight+4)+"px"})}
+window.addEventListener("beforeprint",fitAreas);
+$("#print").addEventListener("click",function(){
+  fitAreas();
+  try{window.print()}catch(e){}
+  toast("如果沒有出現列印視窗，請用瀏覽器選單的「列印」，目的地選「另存為 PDF」");
 });
 var rt0=0;
 $("#reset").addEventListener("click",function(){
@@ -699,7 +732,7 @@ $("#reset").addEventListener("click",function(){
   }
   clearTimeout(rt0);b.classList.remove("armed");b.textContent="全部清除重填";
   ws={info:{},f:{}};for(var k in DEFAULTS)ws.f[k]=DEFAULTS[k];save();
-  buildTable();fillStatic();$("#fb").innerHTML="";$("#copyCard").hidden=true;
+  buildTable();fillStatic();$("#fb").innerHTML="";
   $$(".mark").forEach(function(m){m.textContent="";m.removeAttribute("data-s")});
   updateCount();refreshSteps();toast("學習單已清除");
 });
@@ -714,7 +747,7 @@ $("#send").addEventListener("click",function(){
   for(var k in ws.f)data[k]=ws.f[k];
   fetch(SEND_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(data)})
     .then(function(){toast("已送出！修改後可以再送出一次");b.disabled=false})
-    .catch(function(){toast("送出失敗，請檢查網路再試，或改用「複製學習單內容」");b.disabled=false});
+    .catch(function(){toast("送出失敗，請檢查網路再試，或改用「列印／另存 PDF」");b.disabled=false});
 });
 
 /* ---------- tabs ---------- */
